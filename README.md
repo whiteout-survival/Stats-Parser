@@ -15,8 +15,10 @@ A utility for parsing and formatting stat data in Whiteout Survival.
 
 ```bash
 uv sync
+cd src
+uv run api.py
 ```
-
+A server will start on 0.0.0.0:8000 by default. 
 ## API Endpoint
 
 ### POST `/api/v1/read_stats`

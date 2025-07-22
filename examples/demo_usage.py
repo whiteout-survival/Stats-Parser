@@ -1,8 +1,8 @@
 import base64
 import requests
 
-image_path_1 = "images/minime/1.png"
-image_path_2 = "images/minime/2.png"
+image_path_1 = "../images/minime/1.png"
+image_path_2 = "../images/minime/2.png"
 
 with open(image_path_1, "rb") as img_file:
     image_data_1 = base64.b64encode(img_file.read()).decode('utf-8')
