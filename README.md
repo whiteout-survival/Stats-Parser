@@ -18,7 +18,7 @@ uv sync
 cd src
 uv run api.py
 ```
-A server will start on 0.0.0.0:8000 by default. 
+A server will start on 0.0.0.0:8001 by default. 
 ## API Endpoint
 
 ### POST `/api/v1/read_stats`
@@ -63,3 +63,4 @@ Returns a JSON object containing merged troop statistics extracted from all prov
 
 Refer to the [`demo_usage.py`](demo_usage.py) file for example usage and demonstration of the Stats Parser.
 
+Sample API endpoint (super slow): https://stats-parser.neptunedevs.com/
