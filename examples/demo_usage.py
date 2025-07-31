@@ -5,7 +5,7 @@ from typing import Literal
 
 REPORT_TYPES = Literal['battle_report', "battle", "bonus", "bonus_overview", "overview"]
 
-BASE_URL = "http://cd2db4qq-8000.use.devtunnels.ms/" # Replace with your actual base URL
+BASE_URL = "https://stats-parser.neptunedevs.com/" # Replace with your actual base URL
 
 def get_stats(img_paths: list[str], report_type: REPORT_TYPES) -> dict:
 
