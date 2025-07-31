@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 
 import easyocr
@@ -20,6 +20,28 @@ class ImageData(BaseModel):
 class ReadStatsRequest(BaseModel):
     images: List[ImageData]
 
+class BonusOverviewOutput(BaseModel):
+    stats: dict[str, list[float]] = {
+        "infantry": [0.0, 0.0, 0.0, 0.0],
+        "lancers": [0.0, 0.0, 0.0, 0.0],
+        "marksmen": [0.0, 0.0, 0.0, 0.0]
+    }
+
+class BattleReportOutput(BaseModel):
+    stats: dict[str, dict[str, list[float]]] = {
+        "left": {
+            "infantry": [0.0, 0.0, 0.0, 0.0],
+            "lancer": [0.0, 0.0, 0.0, 0.0],
+            "marksman": [0.0, 0.0, 0.0, 0.0]
+        },
+        "right": {
+            "infantry": [0.0, 0.0, 0.0, 0.0],
+            "lancer": [0.0, 0.0, 0.0, 0.0],
+            "marksman": [0.0, 0.0, 0.0, 0.0]
+        }
+    }
+    
+    
 def preprocess_images(rawrequestdata: ReadStatsRequest) -> list[Any]:
     """Takes raw b64encoded images, processes them, and performs OCR on them
 
@@ -35,30 +57,20 @@ def preprocess_images(rawrequestdata: ReadStatsRequest) -> list[Any]:
     return images_text
 
 @app.post("/api/v1/read_bonus_overview")
-def read_bonus_overview(request: ReadStatsRequest) -> Dict[str, Any]:
+def read_bonus_overview(request: ReadStatsRequest) -> BonusOverviewOutput:
     
     print("Received request with images:", len(request.images))
     parsed_images = preprocess_images(request)
 
     stats = get_bonus_overview_stats(parsed_images)
-    return JSONResponse(
-        {
-            "stats": stats
-        }, 
-        status_code=200
-    )
+    return BonusOverviewOutput(stats=stats)
 
 @app.post("/api/v1/read_battle_report")
-def read_battle_report(request: ReadStatsRequest) -> Dict[str, Any]:
+def read_battle_report(request: ReadStatsRequest) -> BattleReportOutput:
     parsed_images = preprocess_images(request)
     stats = get_battle_report_stats(parsed_images)
-    return JSONResponse(
-        {
-            "stats": stats
-        }, 
-        status_code=200
-    )
+    return BattleReportOutput(stats=stats)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api:app", host="0.0.0.0", port=8000)
+    uvicorn.run("api:app", host="0.0.0.0", port=8001)
