@@ -3,6 +3,7 @@ import base64
 import requests
 from typing import Literal
 import json
+import time
 
 REPORT_TYPES = Literal['battle_report', "battle", "bonus", "bonus_overview", "overview"]
 
@@ -41,25 +42,31 @@ def imgs_in_dir(directory: str, accepted_formats: tuple[str] = ("png", "jpg")) -
     
 def main():
     # Bonus Overview Demo with EasyOCR
-    print("=== Bonus Overview Demo with EasyOCR ===")
+    # print("=== Bonus Overview Demo with EasyOCR ===")
     bonus_overview_stats_dir = "../images/minime"
     bonus_overview_stats_files = imgs_in_dir(bonus_overview_stats_dir)
-    get_stats(bonus_overview_stats_files, report_type="bonus_overview", ocr_engine="easyocr")
+    # print("Fetching stats...")
+    # start = time.time()
+    # get_stats(bonus_overview_stats_files, report_type="bonus_overview", ocr_engine="easyocr")
+    # print(f"Time taken: {time.time() - start:.2f}s")
     
     # Bonus Overview Demo with RapidOCR
     print("\n=== Bonus Overview Demo with RapidOCR ===")
+    print("Fetching stats...")
+    start = time.time()
     get_stats(bonus_overview_stats_files, report_type="bonus_overview", ocr_engine="rapidocr")
+    print(f"Time taken: {time.time() - start:.2f}s")
     
     # Battle Report Demo with EasyOCR
-    print("\n=== Battle Report Demo with EasyOCR ===")
+    # print("\n=== Battle Report Demo with EasyOCR ===")
     report_dir = "../images/test_battle_report"
     report_files = sorted(imgs_in_dir(report_dir))
-    print(f"Loading {len(report_files)} files from folder {report_dir.split('/')[-1]}")
-    print("Fetching stats...")
-    import time
-    start = time.time()
-    get_stats(report_files, report_type="battle_report", ocr_engine="easyocr")
-    print(f"Time taken: {time.time() - start:.2f}s")
+    # print(f"Loading {len(report_files)} files from folder {report_dir.split('/')[-1]}")
+    # print("Fetching stats...")
+
+    # start = time.time()
+    # get_stats(report_files, report_type="battle_report", ocr_engine="easyocr")
+    # print(f"Time taken: {time.time() - start:.2f}s")
     
     # Battle Report Demo with RapidOCR
     print("\n=== Battle Report Demo with RapidOCR ===")

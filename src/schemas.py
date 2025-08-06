@@ -8,7 +8,7 @@ class ImageData(BaseModel):
 
 class ReadStatsRequest(BaseModel):
     images: List[ImageData] = Field(..., description="List of base64 encoded images")
-    ocr_engine: str = Field(default="easyocr", description="OCR engine to use ('easyocr' or 'rapidocr')")
+    ocr_engine: str = Field(default="rapidocr", description="OCR engine to use ('easyocr' or 'rapidocr')")
 
 
 class TroopStats(BaseModel):
