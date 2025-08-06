@@ -41,26 +41,26 @@ def format_stats(kv_dict: dict) -> dict[str, list[float]]:
     stats: dict[str, list[float]] = {
         "troops": [0.0, 0.0, 0.0, 0.0],
         "infantry": [0.0, 0.0, 0.0, 0.0],
-        "lancers": [0.0, 0.0, 0.0, 0.0],
-        "marksmen": [0.0, 0.0, 0.0, 0.0]
+        "lancer": [0.0, 0.0, 0.0, 0.0],
+        "marksman": [0.0, 0.0, 0.0, 0.0]
     }
     stats["troops"][0] = kv_dict["Troops Attack"]
     stats["troops"][1] = kv_dict["Troops Defense"]
     stats["troops"][2] = kv_dict["Troops Lethality"]
     stats["troops"][3] = kv_dict["Troops Health"]
-    # Add infantry, lancers, and marksmen stats
+    # Add infantry, lancer, and marksman stats
     stats["infantry"][0] = kv_dict["Infantry Attack"]
     stats["infantry"][1] = kv_dict["Infantry Defense"]
     stats["infantry"][2] = kv_dict["Infantry Lethality"]
     stats["infantry"][3] = kv_dict["Infantry Health"]
-    stats["lancers"][0] = kv_dict["Lancer Attack"]
-    stats["lancers"][1] = kv_dict["Lancer Defense"]
-    stats["lancers"][2] = kv_dict["Lancer Lethality"]
-    stats["lancers"][3] = kv_dict["Lancer Health"]
-    stats["marksmen"][0] = kv_dict["Marksman Attack"]
-    stats["marksmen"][1] = kv_dict["Marksman Defense"]
-    stats["marksmen"][2] = kv_dict["Marksman Lethality"]
-    stats["marksmen"][3] = kv_dict["Marksman Health"]
+    stats["lancer"][0] = kv_dict["Lancer Attack"]
+    stats["lancer"][1] = kv_dict["Lancer Defense"]
+    stats["lancer"][2] = kv_dict["Lancer Lethality"]
+    stats["lancer"][3] = kv_dict["Lancer Health"]
+    stats["marksman"][0] = kv_dict["Marksman Attack"]
+    stats["marksman"][1] = kv_dict["Marksman Defense"]
+    stats["marksman"][2] = kv_dict["Marksman Lethality"]
+    stats["marksman"][3] = kv_dict["Marksman Health"]
     return stats
 
 def extract_stats(results, keys):
@@ -117,14 +117,14 @@ def merge_stats(stats: list[dict[str, list[float]]]) -> dict[str, list[float]]:
     merged_stats["infantry"][1] = merged_stats["infantry"][1] + merged_stats["troops"][1]
     merged_stats["infantry"][2] = merged_stats["infantry"][2] + merged_stats["troops"][2]
     merged_stats["infantry"][3] = merged_stats["infantry"][3] + merged_stats["troops"][3]
-    merged_stats["lancers"][0] = merged_stats["lancers"][0] + merged_stats["troops"][0]
-    merged_stats["lancers"][1] = merged_stats["lancers"][1] + merged_stats["troops"][1]
-    merged_stats["lancers"][2] = merged_stats["lancers"][2] + merged_stats["troops"][2]
-    merged_stats["lancers"][3] = merged_stats["lancers"][3] + merged_stats["troops"][3]
-    merged_stats["marksmen"][0] = merged_stats["marksmen"][0] + merged_stats["troops"][0]
-    merged_stats["marksmen"][1] = merged_stats["marksmen"][1] + merged_stats["troops"][1]
-    merged_stats["marksmen"][2] = merged_stats["marksmen"][2] + merged_stats["troops"][2]
-    merged_stats["marksmen"][3] = merged_stats["marksmen"][3] + merged_stats["troops"][3]
+    merged_stats["lancer"][0] = merged_stats["lancer"][0] + merged_stats["troops"][0]
+    merged_stats["lancer"][1] = merged_stats["lancer"][1] + merged_stats["troops"][1]
+    merged_stats["lancer"][2] = merged_stats["lancer"][2] + merged_stats["troops"][2]
+    merged_stats["lancer"][3] = merged_stats["lancer"][3] + merged_stats["troops"][3]
+    merged_stats["marksman"][0] = merged_stats["marksman"][0] + merged_stats["troops"][0]
+    merged_stats["marksman"][1] = merged_stats["marksman"][1] + merged_stats["troops"][1]
+    merged_stats["marksman"][2] = merged_stats["marksman"][2] + merged_stats["troops"][2]
+    merged_stats["marksman"][3] = merged_stats["marksman"][3] + merged_stats["troops"][3]
     del merged_stats["troops"]  # Remove the 'troops' key as it's now merged into others
     for troop_type in merged_stats.keys():
         merged_stats[troop_type] = [round(stat, 2) for stat in merged_stats[troop_type]]

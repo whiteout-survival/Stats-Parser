@@ -19,12 +19,12 @@ from schemas import (
 
 app = FastAPI(title="Report Reader API", version="1.0")
 
-allowed_origins = ["stats-parser.neptunedevs.com", "sim.tundra.land", "sim.tundra.land/", "localhost:8000"]
+allowed_origins = ["https://stats-parser.neptunedevs.com", "http://stats-parser.neptunedevs.com", "https://sim.tundra.land", "sim.tundra.land", "localhost:8000"]
 # Enable CORS for all origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_methods=["*"],
+    allow_methods=["POST", "OPTIONS"],
     allow_headers=["*"],
 )
 easyocr_reader = easyocr.Reader(['en'])  # 'en' for English

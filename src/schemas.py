@@ -11,68 +11,27 @@ class ReadStatsRequest(BaseModel):
     ocr_engine: str = Field(default="rapidocr", description="OCR engine to use ('easyocr' or 'rapidocr')")
 
 
-class TroopStats(BaseModel):
-    attack: float = Field(..., description="Attack bonus percentage")
-    defense: float = Field(..., description="Defense bonus percentage")
-    lethality: float = Field(..., description="Lethality bonus percentage")
-    health: float = Field(..., description="Health bonus percentage")
-
-
 class Stats(BaseModel):
-    infantry: TroopStats
-    lancer: TroopStats
-    marksmen: TroopStats
+    infantry: List[float] = Field(..., description="Infantry stats [attack, defense, lethality, health]")
+    lancer: List[float] = Field(..., description="Lancer stats [attack, defense, lethality, health]")
+    marksman: List[float] = Field(..., description="Marksman stats [attack, defense, lethality, health]")
     
     @classmethod
     def from_dict(cls, data: Dict[str, List[float]]) -> "Stats":
         return cls(
-            infantry=TroopStats(
-                attack=data["infantry"][0],
-                defense=data["infantry"][1],
-                lethality=data["infantry"][2],
-                health=data["infantry"][3]
-            ),
-            lancer=TroopStats(
-                attack=data["lancer"][0],
-                defense=data["lancer"][1],
-                lethality=data["lancer"][2],
-                health=data["lancer"][3]
-            ),
-            marksmen=TroopStats(
-                attack=data["marksman"][0],
-                defense=data["marksman"][1],
-                lethality=data["marksman"][2],
-                health=data["marksman"][3]
-            )
+            infantry=[data["infantry"][0], data["infantry"][1], data["infantry"][2], data["infantry"][3]],
+            lancer=[data["lancer"][0], data["lancer"][1], data["lancer"][2], data["lancer"][3]],
+            marksman=[data["marksman"][0], data["marksman"][1], data["marksman"][2], data["marksman"][3]]
         )
 
 
 class BonusOverviewOutput(BaseModel):
-    infantry: TroopStats = Field(..., description="Infantry stats [attack, defense, lethality, health]")
-    lancers: TroopStats = Field(..., description="Lancer stats [attack, defense, lethality, health]")
-    marksmen: TroopStats = Field(..., description="Marksman stats [attack, defense, lethality, health]")
+    stats: Stats = Field(..., description="Stats by troop type")
     
     @classmethod
     def from_stats_dict(cls, stats: Dict[str, List[float]]) -> "BonusOverviewOutput":
         return cls(
-            infantry=TroopStats(
-                attack=stats["infantry"][0],
-                defense=stats["infantry"][1],
-                lethality=stats["infantry"][2],
-                health=stats["infantry"][3]
-            ),
-            lancers=TroopStats(
-                attack=stats["lancers"][0],
-                defense=stats["lancers"][1],
-                lethality=stats["lancers"][2],
-                health=stats["lancers"][3]
-            ),
-            marksmen=TroopStats(
-                attack=stats["marksmen"][0],
-                defense=stats["marksmen"][1],
-                lethality=stats["marksmen"][2],
-                health=stats["marksmen"][3]
-            )
+            stats=Stats.from_dict(stats)
         )
 
 
