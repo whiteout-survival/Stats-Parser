@@ -19,11 +19,11 @@ from schemas import (
 
 app = FastAPI(title="Report Reader API", version="1.0")
 
+allowed_origins = ["stats-parser.neptunedevs.com", "sim.tundra.land", "sim.tundra.land/", "localhost:8000"]
 # Enable CORS for all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -89,4 +89,4 @@ def read_battle_report(request: ReadStatsRequest) -> BattleReportOutput:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api:app", host="0.0.0.0", port=8000)
+    uvicorn.run("api:app", host="0.0.0.0", port=8001)

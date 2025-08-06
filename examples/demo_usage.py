@@ -8,7 +8,7 @@ import time
 REPORT_TYPES = Literal['battle_report', "battle", "bonus", "bonus_overview", "overview"]
 
 BASE_URL = "https://stats-parser.neptunedevs.com/" # Replace with your actual base URL
-BASE_URL = "http://localhost:8000/" # Replace with your actual base URL
+# BASE_URL = "http://localhost:8000/" # Replace with your actual base URL
 
 def get_stats(img_paths: list[str], report_type: REPORT_TYPES, ocr_engine: str = "easyocr") -> dict:
 
