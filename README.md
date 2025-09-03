@@ -9,7 +9,7 @@ A utility for parsing and formatting stat data in Whiteout Survival.
 
 ### Prerequisites
 
-- [uv](https://pypi.org/project/uv/) (Python package manager) installed, if you want to manage Python dependencies
+- [uv](https://pypi.org/project/uv/) (Python project manager)
 
 ### Installation
 

@@ -21,9 +21,5 @@ dependencies = [
     "uvicorn>=0.35.0",
 ]
 
-# [[tool.uv.index]]
-# url = "https://download.pytorch.org/whl/cpu"
-
-
 [tool.uv]
 index-strategy = "unsafe-best-match"

@@ -2,19 +2,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Any, List, Tuple, Union
 
-import easyocr
 from rapidocr_onnxruntime import RapidOCR
 import cv2
 import numpy as np
 import base64
 
 from bonus_overview import get_bonus_overview_stats
-from battle_report import get_battle_report_stats
+from battle_report import parse_battle_report
 from schemas import (
     ReadStatsRequest,
     Stats,
     BonusOverviewOutput,
-    BattleReportOutput
+    BattleReportOutput,
+    BattleOutcome
 )
 
 app = FastAPI(title="Report Reader API", version="1.0")
@@ -24,10 +24,9 @@ allowed_origins = ["https://stats-parser.neptunedevs.com", "http://stats-parser.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_methods=["POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
-easyocr_reader = easyocr.Reader(['en'])  # 'en' for English
 rapidocr_reader = RapidOCR()
 
 def normalize_rapidocr_result(result: Tuple[List[List[Union[List[List[float]], str, float]]], Any]) -> List[Tuple[List[List[float]], str, float]]:
@@ -64,8 +63,12 @@ def preprocess_images(rawrequestdata: ReadStatsRequest) -> list[Any]:
             result = rapidocr_reader(img)
             normalized_result = normalize_rapidocr_result(result)
             images_text.append(normalized_result)
-    else:  # default to easyocr
-        images_text = [easyocr_reader.readtext(img) for img in images]
+    else:  # default to rapidocr (in case another engine is added later)
+        images_text = []
+        for img in images:
+            result = rapidocr_reader(img)
+            normalized_result = normalize_rapidocr_result(result)
+            images_text.append(normalized_result)
     
     return images_text
 
@@ -80,11 +83,14 @@ def read_bonus_overview(request: ReadStatsRequest) -> BonusOverviewOutput:
 
 @app.post("/api/v1/read_battle_report", response_model=BattleReportOutput)
 def read_battle_report(request: ReadStatsRequest) -> BattleReportOutput:
+    
     parsed_images = preprocess_images(request)
-    stats = get_battle_report_stats(parsed_images)
+    stats, outcome = parse_battle_report(parsed_images, stats_only=request.stats_only)
+    print(stats, outcome)
     return BattleReportOutput(
         left_stats=Stats.from_dict(stats["left"]),
-        right_stats=Stats.from_dict(stats["right"])
+        right_stats=Stats.from_dict(stats["right"]),
+        troops_outcome = BattleOutcome.from_dict(outcome)
     )
 
 if __name__ == "__main__":
