@@ -11,6 +11,8 @@ from bonus_overview import get_bonus_overview_stats
 from battle_report import parse_battle_report
 from schemas import (
     ReadStatsRequest,
+    ReadStatsFromReportRequest,
+    ReadStatsFromBonusOverviewRequest,
     Stats,
     BonusOverviewOutput,
     BattleReportOutput,
@@ -69,11 +71,10 @@ def preprocess_images(rawrequestdata: ReadStatsRequest) -> list[Any]:
             result = rapidocr_reader(img)
             normalized_result = normalize_rapidocr_result(result)
             images_text.append(normalized_result)
-    
     return images_text
 
 @app.post("/api/v1/read_bonus_overview", response_model=BonusOverviewOutput)
-def read_bonus_overview(request: ReadStatsRequest) -> BonusOverviewOutput:
+def read_bonus_overview(request: ReadStatsFromBonusOverviewRequest) -> BonusOverviewOutput:
     
     print("Received request with images:", len(request.images))
     parsed_images = preprocess_images(request)
@@ -82,7 +83,7 @@ def read_bonus_overview(request: ReadStatsRequest) -> BonusOverviewOutput:
     return BonusOverviewOutput.from_stats_dict(stats)
 
 @app.post("/api/v1/read_battle_report", response_model=BattleReportOutput)
-def read_battle_report(request: ReadStatsRequest) -> BattleReportOutput:
+def read_battle_report(request: ReadStatsFromReportRequest) -> BattleReportOutput:
     
     parsed_images = preprocess_images(request)
     stats, outcome = parse_battle_report(parsed_images, stats_only=request.stats_only)
