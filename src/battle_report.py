@@ -1,6 +1,7 @@
 from typing import Any
 
 from utils import handle_split_boxes
+from ocr import ocr_image, decode_images_from_b64
 
 KEYS = [    
     "Infantry Attack", "Infantry Defense", "Infantry Lethality", "Infantry Health",
@@ -8,12 +9,48 @@ KEYS = [
     "Marksman Attack", "Marksman Defense", "Marksman Lethality", "Marksman Health"
 ]
 
-def parse_battle_report(images_text: list[list[Any]], stats_only: bool) -> tuple[dict[str, dict[str, list[float]]], dict[str, dict[str, int]] | None]:
-    stats = get_battle_report_stats(images_text)
+
+def parse_battle_report(
+    images_b64: list[str],
+    ocr_engine: str = "rapidocr",
+    stats_only: bool = True,
+) -> tuple[dict[str, dict[str, list[float]]], dict[str, dict[str, int]] | None]:
+    """Parses battle report from base64 images.
+
+    Performs OCR sequentially and finds the required pages ("stat" and optionally
+    "battle overview"). Stops early when enough data is found.
+    """
+    images = decode_images_from_b64(images_b64)
+
+    found_stats: list[tuple[list[list[float]], str, float]] | None = None
+    found_overview: list[tuple[list[list[float]], str, float]] | None = None
+
+    for idx, img in enumerate(images):
+        if found_stats is not None and (stats_only or found_overview is not None):
+            break
+
+        ocr_res = ocr_image(img, ocr_engine)
+        if found_stats is None:
+            if any(str(t[1]).lower().__contains__("stat") for t in ocr_res):
+                found_stats = ocr_res
+        if not stats_only and found_overview is None:
+            if any(str(t[1]).lower().__contains__("battle overview") for t in ocr_res):
+                found_overview = ocr_res
+
+    if found_stats is None:
+        raise ValueError("stat page not found.")
+
+    stats_text = handle_split_boxes(found_stats)
+    stats = read_stats(stats_text)
+
+    outcome = None
     if not stats_only:
-        outcome = get_battle_report_troops_outcome(images_text)
-        return stats, outcome
-    return stats, None
+        if found_overview is None:
+            raise ValueError("battle overview page not found.")
+        overview_text = handle_split_boxes(found_overview)
+        outcome = read_outcome(overview_text)
+
+    return stats, outcome
 
 def get_battle_report_stats(images_text: list[list[Any]]) -> dict[str, dict[str, list[float]]]:
     img_idx, stats_image_text = str_in_image_from_images_list(images_text, "stat")
@@ -38,7 +75,6 @@ def str_in_image_from_images_list(text_in_images: list[list[str]], text_to_find:
                 found_string = found_string[1]
             found_string = str(found_string).lower()
             if found_string.__contains__(text_to_find):
-                print(f"Found '{text_to_find}' in image # {i}")
                 return i, image_text
     raise ValueError(f"{text_to_find} page not found.")
 
@@ -137,7 +173,6 @@ def read_outcome(text_in_image: list[str]) -> dict:
         if isinstance(text, tuple):
             text = text[1]
         text = str(text).strip().lower()
-        print(text)
         if text.__contains__("troops"):
             troops_count_dict["left"]["initial_troops"] = int(str(text_in_image[i-1][1]).strip().translate(format_map))
             troops_count_dict["right"]["initial_troops"] = int(str(text_in_image[i+1][1]).strip().translate(format_map))

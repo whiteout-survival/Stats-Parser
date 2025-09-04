@@ -21,7 +21,7 @@ def get_stats(img_paths: list[str], report_type: REPORT_TYPES, ocr_engine: str =
     else: 
         raise ValueError(f"Unrecognized report type: {report_type}")
     url = f"{BASE_URL}{endpoint}"
-
+    print(f"Sending request to {url} with {len(data_b64enc)} images using {ocr_engine} OCR engine...")
     response = requests.post(url, json = {
         "images": [{"image_data": img_data} for img_data in data_b64enc],
         "ocr_engine": ocr_engine,
@@ -44,8 +44,8 @@ def imgs_in_dir(directory: str, accepted_formats: tuple[str] = ("png", "jpg")) -
 def main():
     # Bonus Overview Demo with EasyOCR
     # print("=== Bonus Overview Demo with EasyOCR ===")
-    bonus_overview_stats_dir = "../images/minime"
-    bonus_overview_stats_files = imgs_in_dir(bonus_overview_stats_dir)
+    # bonus_overview_stats_dir = "../images/minime"
+    # bonus_overview_stats_files = imgs_in_dir(bonus_overview_stats_dir)
     # print("Fetching stats...")
     # start = time.time()
     # get_stats(bonus_overview_stats_files, report_type="bonus_overview", ocr_engine="easyocr")

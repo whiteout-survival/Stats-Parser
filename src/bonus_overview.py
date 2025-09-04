@@ -1,6 +1,7 @@
 from typing import Any
 
 from utils import handle_split_boxes
+from ocr import ocr_images_b64
 
 KEYS = ["Troops Attack", "Troops Defense","Troops Lethality", "Troops Health",
     "Infantry Attack", "Infantry Defense", "Infantry Lethality", "Infantry Health",
@@ -9,11 +10,15 @@ KEYS = ["Troops Attack", "Troops Defense","Troops Lethality", "Troops Health",
 ]    
 
 def get_bonus_overview_stats(images_text: list[list[Any]]) -> dict[str, dict[str, list[float]]]:
-    print(f"Images detected: {len(images_text)}")
     stats = [convert_to_stats(result) for result in images_text]
-    print(stats)
     merged_stats = merge_stats(stats)
     return merged_stats
+
+
+def parse_bonus_overview(images_b64: list[str], ocr_engine: str = "rapidocr") -> dict[str, dict[str, list[float]]]:
+    """Decode, OCR, and parse bonus overview images from base64 payloads."""
+    images_text = ocr_images_b64(images_b64, ocr_engine)
+    return get_bonus_overview_stats(images_text)
 
 def convert_to_stats(raw_ocr_output: list[str]) -> dict[str, list[float]]:
     """

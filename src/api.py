@@ -1,23 +1,24 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Any, List, Tuple, Union
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
-from rapidocr_onnxruntime import RapidOCR
-import cv2
-import numpy as np
-import base64
-
-from bonus_overview import get_bonus_overview_stats
-from battle_report import parse_battle_report
-from schemas import (
-    ReadStatsRequest,
+from bonus_overview import parse_bonus_overview
+from battle_report import (
+    parse_battle_report,
+)
+from schemas.inputs import (
     ReadStatsFromReportRequest,
     ReadStatsFromBonusOverviewRequest,
+)
+from schemas.outputs import (
     Stats,
     BonusOverviewOutput,
     BattleReportOutput,
-    BattleOutcome
+    BattleOutcome,
 )
+from schemas.errors import ErrorResponse, ErrorDetail
+from error_messages import missing_page_message_from_value_error
 
 app = FastAPI(title="Report Reader API", version="1.0")
 
@@ -29,71 +30,88 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-rapidocr_reader = RapidOCR()
 
-def normalize_rapidocr_result(result: Tuple[List[List[Union[List[List[float]], str, float]]], Any]) -> List[Tuple[List[List[float]], str, float]]:
-    """Normalize RapidOCR result to match EasyOCR format."""
-    if result[0] is None:
-        return []
-    # Extract the first element which contains the detections
-    detections = result[0]
-    # Convert each detection to match EasyOCR format
-    normalized = []
-    for detection in detections:
-        # detection is [bbox, text, confidence]
-        bbox = detection[0]  # Already in the correct format
-        text = detection[1]  # String
-        confidence = detection[2]  # Float
-        normalized.append((bbox, text, confidence))
-    return normalized
+# Common error responses to attach to routes
+COMMON_ERROR_RESPONSES = {
+    400: {"model": ErrorResponse, "description": "Bad Request"},
+    404: {"model": ErrorResponse, "description": "Not Found"},
+    422: {"model": ErrorResponse, "description": "Validation Error"},
+    500: {"model": ErrorResponse, "description": "Internal Server Error"},
+}
 
-def preprocess_images(rawrequestdata: ReadStatsRequest) -> list[Any]:
-    """Takes raw b64encoded images, processes them, and performs OCR on them
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    details = [
+        ErrorDetail(loc=list(err.get("loc", [])), msg=err.get("msg"), type=err.get("type"))
+        for err in exc.errors()
+    ]
+    payload = ErrorResponse(code="validation_error", detail="Validation failed", errors=details)
+    return JSONResponse(status_code=422, content=payload.model_dump())
 
-    Args:
-        rawrequestdata (ReadStatsRequest): The raw request data 
 
-    Returns:
-        list[list[Any]]: list of all files, each of which are a list of each detection
-    """
-    imgdata = [base64.b64decode(image.image_data) for image in rawrequestdata.images]
-    images = [cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR) for data in imgdata]
-    
-    if rawrequestdata.ocr_engine == "rapidocr":
-        images_text = []
-        for img in images:
-            result = rapidocr_reader(img)
-            normalized_result = normalize_rapidocr_result(result)
-            images_text.append(normalized_result)
-    else:  # default to rapidocr (in case another engine is added later)
-        images_text = []
-        for img in images:
-            result = rapidocr_reader(img)
-            normalized_result = normalize_rapidocr_result(result)
-            images_text.append(normalized_result)
-    return images_text
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    detail_str = exc.detail if isinstance(exc.detail, str) else "HTTP error"
+    code = {
+        400: "bad_request",
+        401: "unauthorized",
+        403: "forbidden",
+        404: "not_found",
+        422: "validation_error",
+        429: "rate_limited",
+        500: "internal_server_error",
+    }.get(exc.status_code, "error")
+    payload = ErrorResponse(code=code, detail=detail_str)
+    return JSONResponse(status_code=exc.status_code, content=payload.model_dump())
 
-@app.post("/api/v1/read_bonus_overview", response_model=BonusOverviewOutput)
+
+@app.exception_handler(ValueError)
+async def value_error_handler(request: Request, exc: ValueError):
+    """Convert domain ValueErrors into 400 responses with friendly messages."""
+    friendly = missing_page_message_from_value_error(exc)
+    payload = ErrorResponse(code="bad_request", detail=friendly or str(exc))
+    return JSONResponse(status_code=400, content=payload.model_dump())
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    payload = ErrorResponse(code="internal_server_error", detail="An unexpected error occurred")
+    return JSONResponse(status_code=500, content=payload.model_dump())
+
+ 
+
+@app.post(
+    "/api/v1/read_bonus_overview",
+    response_model=BonusOverviewOutput,
+    responses=COMMON_ERROR_RESPONSES,
+)
 def read_bonus_overview(request: ReadStatsFromBonusOverviewRequest) -> BonusOverviewOutput:
-    
-    print("Received request with images:", len(request.images))
-    parsed_images = preprocess_images(request)
-
-    stats = get_bonus_overview_stats(parsed_images)
+    images_b64 = [img.image_data for img in request.images]
+    stats = parse_bonus_overview(images_b64, request.ocr_engine)
     return BonusOverviewOutput.from_stats_dict(stats)
 
-@app.post("/api/v1/read_battle_report", response_model=BattleReportOutput)
+@app.post(
+    "/api/v1/read_battle_report",
+    response_model=BattleReportOutput,
+    responses=COMMON_ERROR_RESPONSES,
+)
 def read_battle_report(request: ReadStatsFromReportRequest) -> BattleReportOutput:
-    
-    parsed_images = preprocess_images(request)
-    stats, outcome = parse_battle_report(parsed_images, stats_only=request.stats_only)
-    print(stats, outcome)
+    images_b64 = [img.image_data for img in request.images]
+    stats, outcome = parse_battle_report(
+        images_b64=images_b64,
+        ocr_engine=request.ocr_engine,
+        stats_only=request.stats_only,
+    )
     return BattleReportOutput(
         left_stats=Stats.from_dict(stats["left"]),
         right_stats=Stats.from_dict(stats["right"]),
-        troops_outcome = BattleOutcome.from_dict(outcome)
+        troops_outcome=BattleOutcome.from_dict(outcome) if outcome is not None else None,
     )
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api:app", host="0.0.0.0", port=8001)
+    uvicorn.run(
+        "api:app",
+        host="0.0.0.0",
+        port=8001,
+    )
